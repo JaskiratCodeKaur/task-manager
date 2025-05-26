@@ -1,0 +1,33 @@
+
+.react-calendar {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 1.1rem;
+  width: 100% !important;
+  border: none;
+}
+
+.big-calendar {
+  padding: 1rem;
+}
+
+.react-calendar__tile {
+  height: 80px;
+  padding: 10px;
+  position: relative;
+}
+
+.react-calendar__tile--active {
+  background-color: #cce5ff !important;
+  color: #003366;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  background-color: #2563eb;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+}

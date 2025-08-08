@@ -78,22 +78,15 @@ const AdminDashboard = () => {
 
   if (!user) return null;
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'online': return 'bg-green-500';
-      case 'busy': return 'bg-yellow-500';
-      case 'offline': return 'bg-gray-400';
-      default: return 'bg-gray-400';
-    }
-  };
-
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <main className="flex-1 p-8 overflow-y-auto space-y-10">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Welcome back, {user.name}
-        </h1>
+        <div class="mb-6 pb-3 border-b border-gray-300">
+          <h1 className="text-3xl font-semibold text-gray-900 leading-tight mb-2">
+            Welcome back, <span className="text-indigo-600">{user.name}</span>
+          </h1>
+        </div>
         
         <QuoteOfTheDay />
 

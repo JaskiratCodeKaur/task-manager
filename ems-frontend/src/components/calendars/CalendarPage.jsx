@@ -3,36 +3,53 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import axios from 'axios';
 import { format } from 'date-fns';
+
 import SidebarEmployee from '../main/SidebarEmployee';
+import Sidebar from '../main/Sidebar'; // import your admin sidebar
+
 import '../calendars/custom-calendar.css';
 
 const CalendarPage = () => {
   const [tasks, setTasks] = useState([]);
   const [selectedDateTasks, setSelectedDateTasks] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [role, setRole] = useState('');
+  const [userId, setUserId] = useState('');
 
   useEffect(() => {
-    fetchUpcomingTasks();
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user) {
+      setRole(user.role.toLowerCase());
+      setUserId(user._id || user.id);
+    }
   }, []);
 
-const fetchUpcomingTasks = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const response = await axios.get('http://localhost:5000/api/tasks/upcoming', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  useEffect(() => {
+    if (role) {
+      fetchTasks();
+    }
+  }, [role]);
 
-    console.log('Calendar API response:', response.data);
+  const fetchTasks = async () => {
+    try {
+      const token = localStorage.getItem('token');
 
-    const data = Array.isArray(response.data) ? response.data : response.data.tasks || [];
-    setTasks(data);
-    filterTasksByDate(new Date(), data);
-  } catch (err) {
-    console.error('Calendar fetch error:', err);
-  }
-};
+      let url = 'http://localhost:5000/api/tasks/upcoming';
+      if (role === 'employee') {
+        url = `http://localhost:5000/api/tasks/assigned/${userId}`;
+      }
 
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
+      const data = Array.isArray(response.data) ? response.data : response.data.tasks || [];
+      setTasks(data);
+      filterTasksByDate(new Date(), data);
+    } catch (err) {
+      console.error('Calendar fetch error:', err);
+    }
+  };
 
   const filterTasksByDate = (date, allTasks = tasks) => {
     const dateStr = format(date, 'yyyy-MM-dd');
@@ -47,9 +64,13 @@ const fetchUpcomingTasks = async () => {
     filterTasksByDate(date);
   };
 
+  // Pick sidebar component dynamically
+  const SidebarComponent = role === 'admin' ? Sidebar : SidebarEmployee;
+
   return (
-    <div className="flex">
-      <SidebarEmployee />
+    <div className="flex min-h-screen">
+      <SidebarComponent /> {/* Sidebar rendered here */}
+
       <div className="flex-1 p-10 bg-gray-100 min-h-screen">
         <h2 className="text-3xl font-bold mb-6">📅 Task Calendar</h2>
 
@@ -79,7 +100,14 @@ const fetchUpcomingTasks = async () => {
                   <li key={task._id} className="p-4 border-l-4 border-blue-500 bg-gray-50 rounded shadow">
                     <p className="text-lg font-medium">{task.title}</p>
                     <p className="text-sm text-gray-600">Due: {format(new Date(task.dueDate), 'PPPP')}</p>
-                    <p className="text-sm text-gray-600">Status: <span className="font-semibold">{task.status}</span></p>
+                    <p className="text-sm text-gray-600">
+                      Status: <span className="font-semibold">{task.status}</span>
+                    </p>
+                    {role === 'admin' && task.assignedTo && (
+                      <p className="text-sm text-gray-600">
+                        Assigned To: <span className="font-semibold">{task.assignedTo.name}</span>
+                      </p>
+                    )}
                   </li>
                 ))}
               </ul>

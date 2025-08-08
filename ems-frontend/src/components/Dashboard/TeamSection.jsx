@@ -1,46 +1,51 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { FaMailBulk, FaPhoneAlt, FaPlus } from 'react-icons/fa';
+import { FaMailBulk, FaPlus } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const TeamSection = () => {
-  const [teamMembers, setTeamMembers] = useState([]); // initialized as empty array
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [tasks, setTasks] = useState([]); // New state to hold tasks
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Simple status color helper (adjust as you like)
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'online': return 'bg-green-500';
-      case 'busy': return 'bg-yellow-500';
-      case 'offline': return 'bg-gray-400';
-      default: return 'bg-gray-400';
-    }
-  };
-
   useEffect(() => {
-    const fetchMembers = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/api/auth/members', {
+
+        // Fetch team members
+        const membersRes = await axios.get('http://localhost:5000/api/auth/members', {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setTeamMembers(res.data || []);
+
+        // Fetch tasks
+        const tasksRes = await axios.get('http://localhost:5000/api/tasks', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setTeamMembers(membersRes.data || []);
+        setTasks(tasksRes.data.tasks || []);
         setError('');
       } catch (err) {
-        setError('Failed to fetch members');
+        setError('Failed to fetch data');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchMembers();
+    fetchData();
   }, []);
 
   if (loading) return <p>Loading team members...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
+
+  // Helper to count tasks assigned to a member
+  const countTasksForMember = (memberId) => {
+    return tasks.filter(task => task.assignedTo?._id === memberId).length;
+  };
 
   return (
     <section className="bg-white rounded-2xl shadow p-6 max-w-3xl mx-auto">
@@ -78,7 +83,7 @@ const TeamSection = () => {
                   </div>
                 </div>
                 <span className="inline-block px-2 py-1 text-xs font-semibold rounded bg-gray-200 text-gray-700">
-                  {member.tasksCompleted ?? '0'} tasks
+                  {countTasksForMember(member._id || member.id)} tasks
                 </span>
               </div>
 
@@ -86,20 +91,6 @@ const TeamSection = () => {
                 <div className="flex items-center gap-1 truncate max-w-[120px]">
                   <FaMailBulk className="w-3 h-3" />
                   <span>{member.email}</span>
-                </div>
-                <div className="flex gap-1">
-                  <button
-                    aria-label={`Send mail to ${member.name}`}
-                    className="p-1 rounded hover:bg-gray-100"
-                  >
-                    <FaMailBulk className="w-3 h-3" />
-                  </button>
-                  <button
-                    aria-label={`Call ${member.name}`}
-                    className="p-1 rounded hover:bg-gray-100"
-                  >
-                    <FaPhoneAlt className="w-3 h-3" />
-                  </button>
                 </div>
               </div>
             </div>

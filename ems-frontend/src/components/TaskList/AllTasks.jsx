@@ -31,12 +31,9 @@ const AllTasks = () => {
         : [];
 
       setTasks(taskList);
-
-      // If role is sent from backend, use it (otherwise get from localStorage/user context)
       if (response.data.role) {
         setRole(response.data.role);
       } else {
-        // fallback: try getting user role from global/localStorage or decode token
         const user = JSON.parse(localStorage.getItem('user'));
         if (user && user.role) setRole(user.role);
       }
@@ -69,63 +66,62 @@ const AllTasks = () => {
             <div className="overflow-x-auto">
               <table className="w-full text-left border border-gray-200 rounded-md">
                 <thead className="bg-emerald-100 text-emerald-700">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">Title</th>
-                  <th className="px-4 py-3 font-semibold">Category</th>
-                  <th className="px-4 py-3 font-semibold">Assigned To</th>
-                  {/* Only show Created By if NOT admin */}
-                  {role.toLowerCase() !== 'admin' && (
-                    <th className="px-4 py-3 font-semibold">Created By</th>
-                  )}
-                  <th className="px-4 py-3 font-semibold">Due Date</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Action</th>
-                </tr>
-              </thead>
-              <tbody className="text-gray-800">
-                {tasks.map((task, index) => (
-                  <tr
-                    key={task._id}
-                    className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                  >
-                    <td className="px-4 py-4 font-medium">{task.title}</td>
-                    <td className="px-4 py-4">{task.category}</td>
-                    <td className="px-4 py-4">{task.assignedTo?.name || 'Unassigned'}</td>
-
-                    {/* Only show Created By cell if NOT admin */}
+                  <tr>
+                    <th className="px-4 py-3 font-semibold">Title</th>
+                    <th className="px-4 py-3 font-semibold">Category</th>
+                    <th className="px-4 py-3 font-semibold">Assigned To</th>
                     {role.toLowerCase() !== 'admin' && (
-                      <td className="px-4 py-4">{task.createdBy?.name || 'N/A'}</td>
+                      <th className="px-4 py-3 font-semibold">Created By</th>
                     )}
-
-                    <td className="px-4 py-4">{new Date(task.dueDate).toLocaleDateString()}</td>
-                    <td className="px-4 py-4">
-                      <span
-                        className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                          task.status === 'completed'
-                            ? 'bg-green-100 text-green-700'
-                            : task.status === 'in progress'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : task.status === 'declined'
-                            ? 'bg-red-200 text-red-800'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        {task.status || 'Pending'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4">
-                      <button
-                        onClick={() => navigate(`/admin/tasks/${task._id}`)}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm px-4 py-2 rounded"
-                      >
-                        View
-                      </button>
-                    </td>
+                    <th className="px-4 py-3 font-semibold">Due Date</th>
+                    <th className="px-4 py-3 font-semibold">Status</th>
+                    <th className="px-4 py-3 font-semibold">Action</th>
                   </tr>
-                ))}
-              </tbody>
+                </thead>
+                <tbody className="text-gray-800">
+                  {tasks.map((task, index) => (
+                    <tr
+                      key={task._id}
+                      className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                    >
+                      <td className="px-4 py-4 font-medium">{task.title}</td>
+                      <td className="px-4 py-4">{task.category}</td>
+                      <td className="px-4 py-4">{task.assignedTo?.name || 'Unassigned'}</td>
 
-            
+                      {/* Only show Created By cell if NOT admin */}
+                      {role.toLowerCase() !== 'admin' && (
+                        <td className="px-4 py-4">{task.createdBy?.name || 'N/A'}</td>
+                      )}
+
+                      <td className="px-4 py-4">{new Date(task.dueDate).toLocaleDateString()}</td>
+                      <td className="px-4 py-4">
+                        <span
+                          className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                            task.status === 'completed'
+                              ? 'bg-green-100 text-green-700'
+                              : task.status === 'in progress'
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : task.status === 'declined'
+                              ? 'bg-red-200 text-red-800'
+                              : 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          {task.status || 'Pending'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-4">
+                        {task.status === 'completed' && (
+                          <button
+                            onClick={() => navigate(`/admin/tasks/${task._id}`)}
+                            className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm px-4 py-2 rounded"
+                          >
+                            View
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
           )}

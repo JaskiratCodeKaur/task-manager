@@ -1,6 +1,5 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-
 import Login from './components/Auth/Login';
 import EmployeeDashboard from './components/Dashboard/EmployeeDashboard';
 import AdminDashboard from './components/Dashboard/AdminDashboard';
@@ -25,13 +24,12 @@ const App = () => {
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
         <Route path="/create-member" element={<CreateMember />} />
-       <Route path="/team-section" element={<TeamSection />} />
         <Route path="/create-task" element={<CreateTask />} />
         <Route path="/view-members" element={<ViewMembers />} />
         <Route path="/all-tasks" element={<AllTasks />} />
         <Route path="/employee-tasks" element={<EmployeeTasksPage />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/employee-calendar" element={<CalendarPage />} />
+        <Route path="/calendar" element={<CalendarPage />} />
         <Route path="/task-details/:taskId" element={<TaskDetailsPage />} />
         <Route path="/settings-page" element={<SettingsEmployee />} />
       </Routes>

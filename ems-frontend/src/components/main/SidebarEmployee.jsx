@@ -25,17 +25,13 @@ const SidebarEmployee = () => {
         <button onClick={() => navigate('/employee-tasks')} className="flex items-center gap-3 p-2 rounded hover:bg-gray-700 w-full text-left">
           <FaClipboardList /> My Tasks
         </button>
-        <button onClick={() => navigate('/employee-reports')} className="flex items-center gap-3 p-2 rounded hover:bg-gray-700 w-full text-left">
-          <FaChartBar /> Reports
-        </button>
-        <button onClick={() => navigate('/employee-calendar')} className="flex items-center gap-3 p-2 rounded hover:bg-gray-700 w-full text-left">
+        <button onClick={() => navigate('/calendar')} className="flex items-center gap-3 p-2 rounded hover:bg-gray-700 w-full text-left">
           <FaCalendarCheck /> Calendar
         </button>
         <button onClick={() => navigate('/settings-page')} className="flex items-center gap-3 p-2 rounded hover:bg-gray-700 w-full text-left">
-              <FaCogs /> Settings
+            <FaCogs /> Settings
         </button>
       </nav>
-
       <button
         onClick={() => navigate('/')}
         className="flex items-center gap-2 p-4 border-t border-gray-700 hover:bg-gray-700 w-full justify-center"

@@ -1,176 +1,135 @@
-import React, { useState, useEffect } from 'react';
-import Sidebar from '../main/Sidebar';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 import axios from 'axios';
+import { format } from 'date-fns';
 
-const CreateTask = () => {
-  const navigate = useNavigate();
-  const [taskTitle, setTaskTitle] = useState('');
-  const [taskDescription, setTaskDescription] = useState('');
-  const [taskDate, setTaskDate] = useState('');
-  const [assignTo, setAssignTo] = useState('');
-  const [category, setCategory] = useState('');
-  const [members, setMembers] = useState([]);
-  const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [taskCreated, setTaskCreated] = useState(false);
+import SidebarEmployee from '../main/SidebarEmployee';
+import SidebarAdmin from '../main/Sidebar';  // <-- import admin sidebar
+
+import '../calendars/custom-calendar.css';
+
+const CalendarPage = () => {
+  const [tasks, setTasks] = useState([]);
+  const [selectedDateTasks, setSelectedDateTasks] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [role, setRole] = useState('');
+  const [userId, setUserId] = useState('');
 
   useEffect(() => {
-    const fetchMembers = async () => {
-      const token = localStorage.getItem('token');
-      try {
-        const response = await axios.get('http://localhost:5000/api/auth/members', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setMembers(response.data);
-      } catch (error) {
-        console.error('Failed to fetch members', error);
-      }
-    };
-
-    fetchMembers();
+    // Get user role and id from localStorage or auth context
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user) {
+      setRole(user.role.toLowerCase());
+      setUserId(user._id || user.id);
+    }
   }, []);
 
-  const submitHandler = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccessMessage('');
-
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setError('Authentication token missing. Please log in again.');
-      return;
+  useEffect(() => {
+    if (role) {
+      fetchTasks();
     }
+  }, [role]);
 
-    if (!taskTitle || !taskDate || !assignTo || !category || !taskDescription) {
-      setError('Please fill all required fields.');
-      return;
-    }
-
-    const newTask = {
-      title: taskTitle,
-      description: taskDescription,
-      dueDate: taskDate,
-      assignedTo: assignTo,
-      category,
-    };
-
+  const fetchTasks = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/api/tasks', newTask, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+      const token = localStorage.getItem('token');
+
+      // Choose endpoint based on role
+      let url = 'http://localhost:5000/api/tasks/upcoming';
+
+      if (role === 'employee') {
+        // Employee sees only tasks assigned to them
+        url = `http://localhost:5000/api/tasks/assigned/${userId}`;
+      }
+
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      setSuccessMessage('Task created successfully!');
-      setTaskCreated(true);
-      setTaskTitle('');
-      setCategory('');
-      setAssignTo('');
-      setTaskDate('');
-      setTaskDescription('');
-    } catch (error) {
-      setError(error.response?.data?.message || 'Task creation failed.');
+      const data = Array.isArray(response.data) ? response.data : response.data.tasks || [];
+      setTasks(data);
+      filterTasksByDate(new Date(), data);
+    } catch (err) {
+      console.error('Calendar fetch error:', err);
     }
   };
 
+  const filterTasksByDate = (date, allTasks = tasks) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const filtered = allTasks.filter(
+      task => format(new Date(task.dueDate), 'yyyy-MM-dd') === dateStr
+    );
+    setSelectedDateTasks(filtered);
+  };
+
+  const onDateChange = (date) => {
+    setSelectedDate(date);
+    filterTasksByDate(date);
+  };
+
+  // Choose sidebar based on role
+  const SidebarComponent = role === 'admin' ? SidebarAdmin : SidebarEmployee;
+
   return (
-    <div className="flex h-screen bg-gray-100 text-gray-900">
-      <Sidebar />
-      <main className="flex-1 p-10 overflow-y-auto">
-        <div className="max-w-3xl mx-auto bg-white p-8 rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-3xl font-bold text-emerald-600 mb-6">Create New Task</h2>
+    <div className="flex min-h-screen">
+      <SidebarComponent /> {/* Dynamic sidebar */}
 
-          {error && <p className="text-red-500 mb-4 font-medium">{error}</p>}
-          {successMessage && <p className="text-green-600 mb-4 font-medium">{successMessage}</p>}
+      <div className="flex-1 p-10 bg-gray-100 min-h-screen">
+        <h2 className="text-3xl font-bold mb-6">📅 Task Calendar</h2>
 
-          {taskCreated ? (
-            <div className="text-center">
-              <h3 className="text-xl font-semibold text-emerald-600 mb-4">✅ Task successfully created!</h3>
-              <button
-                onClick={() => setTaskCreated(false)}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white py-2 px-6 rounded-md"
-              >
-                Create Another Task
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={submitHandler} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Task Title *</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Design Login Page"
-                  value={taskTitle}
-                  onChange={(e) => setTaskTitle(e.target.value)}
-                  className="w-full bg-white border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                />
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          <div className="rounded-lg overflow-hidden shadow-xl bg-white p-6">
+            <Calendar
+              onChange={onDateChange}
+              value={selectedDate}
+              className="w-full big-calendar"
+              tileContent={({ date }) => {
+                const dateStr = format(date, 'yyyy-MM-dd');
+                const hasTask = tasks.some(
+                  task => format(new Date(task.dueDate), 'yyyy-MM-dd') === dateStr
+                );
+                return hasTask ? <div className="dot"></div> : null;
+              }}
+            />
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date *</label>
-                <input
-                  type="date"
-                  value={taskDate}
-                  onChange={(e) => setTaskDate(e.target.value)}
-                  className="w-full bg-white border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assign To *</label>
-                <select
-                  value={assignTo}
-                  onChange={(e) => setAssignTo(e.target.value)}
-                  className="w-full bg-white border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                >
-                  <option value="">Select Employee</option>
-                  {members.map((member) => (
-                    <option key={member._id} value={member._id}>
-                      {member.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Design, Development"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-white border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Task Description *</label>
-                <textarea
-                  value={taskDescription}
-                  onChange={(e) => setTaskDescription(e.target.value)}
-                  placeholder="Write the task details here..."
-                  className="w-full bg-white border border-gray-300 rounded-md px-4 py-2 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                ></textarea>
-              </div>
-
-              <div>
-                <button
-                  type="submit"
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 px-6 rounded-md font-semibold transition-all"
-                >
-                  Create Task
-                </button>
-              </div>
-            </form>
-          )}
+          <div className="bg-white rounded-lg p-6 shadow-xl">
+            <h3 className="text-2xl font-semibold mb-4">
+              Tasks on {format(selectedDate, 'PPP')}
+            </h3>
+            {selectedDateTasks.length > 0 ? (
+              <ul className="space-y-4">
+                {selectedDateTasks.map(task => (
+                  <li
+                    key={task._id}
+                    className="p-4 border-l-4 border-blue-500 bg-gray-50 rounded shadow"
+                  >
+                    <p className="text-lg font-medium">{task.title}</p>
+                    <p className="text-sm text-gray-600">
+                      Due: {format(new Date(task.dueDate), 'PPPP')}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Status: <span className="font-semibold">{task.status}</span>
+                    </p>
+                    {/* Show assigned to only for admin */}
+                    {role === 'admin' && task.assignedTo && (
+                      <p className="text-sm text-gray-600">
+                        Assigned To:{' '}
+                        <span className="font-semibold">{task.assignedTo.name}</span>
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-600 text-lg">No tasks due on this date.</p>
+            )}
+          </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };
 
-export default CreateTask;
+export default CalendarPage;

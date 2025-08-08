@@ -23,7 +23,7 @@ const ViewMembers = () => {
         });
         setMembers(response.data);
       } catch (err) {
-        setError('❌ Failed to fetch members');
+        setError('Failed to fetch members');
       }
     };
 
